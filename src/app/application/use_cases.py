@@ -7,6 +7,7 @@ from app.domain.exceptions import (
 )
 from app.infrastructure.repository import fake_db, fake_db_users
 
+
 # Validacioness
 def validar_estado(status: str):
     if status not in task_status:
@@ -81,32 +82,33 @@ def get_tasks(list_id: UUID) -> List[Tarea]:
             return lista.tasks
     raise ListaNoEncontradaException()
 
-def create_task(list_id: UUID, tarea_data: TareaCreate) -> Tarea:
+def create_task(list_id: UUID, tarea_data: TareaCreate, current_user: User) -> Tarea:
     validar_estado(tarea_data.status)
     validar_progreso(tarea_data.progress)
     validar_prioridad(tarea_data.priority)
 
-    assigned_user = None
-    if tarea_data.assigned_to_username:
-        assigned_user = get_user_by_username(tarea_data.assigned_to_username)
+    assigned_user = current_user
+    if tarea_data.assigned_to:
+        assigned_user = get_user_by_username(tarea_data.assigned_to)
 
     for lista in fake_db:
         if lista.id == list_id:
             nueva_tarea = Tarea(
-                title           =   tarea_data.title,
-                description     =   tarea_data.description,
-                partner         =   tarea_data.partner,
-                rol             =   tarea_data.rol,
-                status          =   tarea_data.status,
-                progress        =   tarea_data.progress,
-                priority        =   tarea_data.priority,
-                assigned_to     =   assigned_user
+                title       = tarea_data.title,
+                description = tarea_data.description,
+                partner     = tarea_data.partner,
+                rol         = tarea_data.rol,
+                status      = tarea_data.status,
+                progress    = tarea_data.progress,
+                priority    = tarea_data.priority,
+                assigned_to = assigned_user.username if assigned_user else None
             )
             lista.tasks.append(nueva_tarea)
 
-            print(f"[Notificación] Se envió una invitación a {tarea_data.assigned_to} para la tarea '{tarea_data.title}'")
+            print(f"[Notificación] Se asignó la tarea '{tarea_data.title}' al usuario '{assigned_user.username}'")
 
             return nueva_tarea
+
     raise ListaNoEncontradaException()
 
 def update_task(task_id: UUID, tarea_data: TareaCreate) -> Tarea:
@@ -115,25 +117,26 @@ def update_task(task_id: UUID, tarea_data: TareaCreate) -> Tarea:
     validar_prioridad(tarea_data.priority)
 
     assigned_user = None
-    if tarea_data.assigned_to_username:
-        assigned_user = get_user_by_username(tarea_data.assigned_to_username)
+    if tarea_data.assigned_to:
+        assigned_user = get_user_by_username(tarea_data.assigned_to)
 
     for lista in fake_db:
         for i, tarea in enumerate(lista.tasks):
             if tarea.id == task_id:
                 tarea_actualizada = Tarea(
-                    id          =   tarea.id,
-                    title       =   tarea_data.title,
-                    description =   tarea_data.description,
-                    partner     =   tarea_data.partner,
-                    rol         =   tarea_data.rol,
-                    status      =   tarea_data.status,
-                    progress    =   tarea_data.progress,
-                    priority    =   tarea_data.priority,
-                    assigned_to =   assigned_user
+                    id          = tarea.id,
+                    title       = tarea_data.title,
+                    description = tarea_data.description,
+                    partner     = tarea_data.partner,
+                    rol         = tarea_data.rol,
+                    status      = tarea_data.status,
+                    progress    = tarea_data.progress,
+                    priority    = tarea_data.priority,
+                    assigned_to = assigned_user.username if assigned_user else None
                 )
                 lista.tasks[i] = tarea_actualizada
                 return tarea_actualizada
+
     raise TareaNoEncontradaException()
 
 def update_task_status(task_id: UUID, status: str) -> Tarea:

@@ -52,7 +52,7 @@ class Tarea(BaseModel):
                 "status": "No iniciada",
                 "progress": "0%",
                 "priority": "Muy bajo",
-                "assigned_to":"Farid Ale Ali"
+                "assigned_to":"admin"
             }
         }
     )

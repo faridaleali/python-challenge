@@ -13,6 +13,11 @@ Este proyecto es una API REST construida con FastAPI para la gestión de listas 
 
 ---
 
+## Usuario a ingresar para obtener el JWT
+
+- Username: admin
+- Password: admin
+
 ## Requisitos
 
 - Python 3.13+
