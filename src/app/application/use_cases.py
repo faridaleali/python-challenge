@@ -111,12 +111,12 @@ def create_task(list_id: UUID, tarea_data: TareaCreate, current_user: User) -> T
 
     raise ListaNoEncontradaException()
 
-def update_task(task_id: UUID, tarea_data: TareaCreate) -> Tarea:
+def update_task(task_id: UUID, tarea_data: TareaCreate, current_user: User) -> Tarea:
     validar_estado(tarea_data.status)
     validar_progreso(tarea_data.progress)
     validar_prioridad(tarea_data.priority)
 
-    assigned_user = None
+    assigned_user = current_user
     if tarea_data.assigned_to:
         assigned_user = get_user_by_username(tarea_data.assigned_to)
 
@@ -124,14 +124,14 @@ def update_task(task_id: UUID, tarea_data: TareaCreate) -> Tarea:
         for i, tarea in enumerate(lista.tasks):
             if tarea.id == task_id:
                 tarea_actualizada = Tarea(
-                    id          = tarea.id,
-                    title       = tarea_data.title,
+                    id = tarea.id,
+                    title = tarea_data.title,
                     description = tarea_data.description,
-                    partner     = tarea_data.partner,
-                    rol         = tarea_data.rol,
-                    status      = tarea_data.status,
-                    progress    = tarea_data.progress,
-                    priority    = tarea_data.priority,
+                    partner = tarea_data.partner,
+                    rol = tarea_data.rol,
+                    status = tarea_data.status,
+                    progress = tarea_data.progress,
+                    priority = tarea_data.priority,
                     assigned_to = assigned_user.username if assigned_user else None
                 )
                 lista.tasks[i] = tarea_actualizada

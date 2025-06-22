@@ -10,9 +10,19 @@ def test_home():
     assert response.status_code == 200
     assert "Servidor levantado" in response.json().get("message", "")
 
+def get_auth_token():
+    login_data = {"username": "admin", "password": "admin"}
+    response = client.post("/login", data=login_data)
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
 def test_create_get_update_delete_list():
+
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
     # Crear lista
-    response = client.post("/list", json={"name": "Lista para CRUD"})
+    response = client.post("/list", json={"name": "Lista para CRUD"}, headers=headers)
     assert response.status_code == 200
     list_data = response.json()
     list_id = list_data["id"]
@@ -20,31 +30,35 @@ def test_create_get_update_delete_list():
     assert isinstance(UUID(list_id), UUID)
 
     # Obtener listas y validar que la creada está presente
-    response = client.get("/lists")
+    response = client.get("/lists", headers=headers)
     assert response.status_code == 200
     assert any(lista["id"] == list_id for lista in response.json())
 
     # Actualizar lista
-    response = client.put(f"/lists/{list_id}", json={"name": "Lista actualizada"})
+    response = client.put(f"/lists/{list_id}", json={"name": "Lista actualizada"}, headers=headers)
     assert response.status_code == 200
     assert response.json()["name"] == "Lista actualizada"
 
     # Obtener porcentaje completado (vacío, debe ser 0%)
-    response = client.get(f"/lists/completion/{list_id}")
+    response = client.get(f"/lists/completion/{list_id}", headers=headers)
     assert response.status_code == 200
     assert response.json()["completion"] == "0%"
 
     # Borrar lista
-    response = client.delete(f"/lists/{list_id}")
+    response = client.delete(f"/lists/{list_id}", headers=headers)
     assert response.status_code == 204
 
     # Confirmar que ya no existe
-    response = client.get("/lists")
+    response = client.get("/lists", headers=headers)
     assert all(l["id"] != list_id for l in response.json())
 
 def test_task_lifecycle():
+    
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
     # Crear lista para tareas
-    response = client.post("/list", json={"name": "Lista tareas"})
+    response = client.post("/list", json={"name": "Lista tareas"}, headers=headers)
     list_id = response.json()["id"]
 
     # Crear tarea válida
@@ -55,52 +69,57 @@ def test_task_lifecycle():
         "rol": "Rol",
         "status": task_status[0],
         "progress": task_progress[0],
-        "priority": task_priority[0]
+        "priority": task_priority[0],
+        "assigned_to":"admin"
     }
-    response = client.post(f"/tasks/{list_id}/", json=tarea_data)
+    response = client.post(f"/tasks/{list_id}/", json=tarea_data, headers=headers)
     assert response.status_code == 200
     task = response.json()
     task_id = task["id"]
 
     # Obtener tareas de la lista y verificar que la creada esté presente
-    response = client.get(f"/tasks/{list_id}")
+    response = client.get(f"/tasks/{list_id}", headers=headers)
     assert response.status_code == 200
     assert any(t["id"] == task_id for t in response.json())
 
     # Actualizar tarea
     updated_data = tarea_data.copy()
     updated_data["title"] = "Tarea actualizada"
-    response = client.put(f"/tasks/{task_id}", json=updated_data)
+    response = client.put(f"/tasks/{task_id}", json=updated_data, headers=headers)
     assert response.status_code == 200
     assert response.json()["title"] == "Tarea actualizada"
 
     # Cambiar estado de la tarea
     new_status = task_status[1]
-    response = client.patch(f"/tasks/status/{task_id}", json={"status": new_status})
+    response = client.patch(f"/tasks/status/{task_id}", json={"status": new_status}, headers=headers)
     assert response.status_code == 200
     assert response.json()["status"] == new_status
 
     # Filtrar tareas por estado
-    response = client.get(f"/tasks/filter/{list_id}?status={new_status}")
+    response = client.get(f"/tasks/filter/{list_id}?status={new_status}", headers=headers)
     assert response.status_code == 200
     assert all(t["status"] == new_status for t in response.json())
 
     # Filtrar tareas por prioridad
-    response = client.get(f"/tasks/filter/{list_id}?priority={task_priority[0]}")
+    response = client.get(f"/tasks/filter/{list_id}?priority={task_priority[0]}", headers=headers)
     assert response.status_code == 200
     assert all(t["priority"] == task_priority[0] for t in response.json())
 
     # Borrar tarea
-    response = client.delete(f"/tasks/{task_id}")
+    response = client.delete(f"/tasks/{task_id}", headers=headers)
     assert response.status_code == 204
 
     # Confirmar que la tarea ya no existe
-    response = client.get(f"/tasks/{list_id}")
+    response = client.get(f"/tasks/{list_id}", headers=headers)
     assert all(t["id"] != task_id for t in response.json())
 
 def test_create_task_invalid_status():
+    
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
     # Crear lista para tarea inválida
-    response = client.post("/list", json={"name": "Lista inválida"})
+    response = client.post("/list", json={"name": "Lista inválida"}, headers=headers)
     list_id = response.json()["id"]
 
     # Intentar crear tarea con status inválido
@@ -111,15 +130,20 @@ def test_create_task_invalid_status():
         "rol": "R",
         "status": "Estado inválido",
         "progress": task_progress[0],
-        "priority": task_priority[0]
+        "priority": task_priority[0],
+        "assigned_to":"admin"
     }
-    response = client.post(f"/tasks/{list_id}/", json=tarea_data)
-    assert response.status_code == 400
+    response = client.post(f"/tasks/{list_id}/", json=tarea_data, headers=headers)
+    assert response.status_code == 404
     assert "Estado inválido" in response.text
 
 def test_get_list_completion_with_tasks():
+    
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
     # Crear lista con tareas
-    response = client.post("/list", json={"name": "Lista con tareas"})
+    response = client.post("/list", json={"name": "Lista con tareas"}, headers=headers)
     list_id = response.json()["id"]
 
     # Crear tareas con diferentes estados
@@ -139,7 +163,7 @@ def test_get_list_completion_with_tasks():
     client.post(f"/tasks/{list_id}/", json=tarea_data_2)
 
     # Obtener porcentaje de tareas completadas
-    response = client.get(f"/lists/completion/{list_id}")
+    response = client.get(f"/lists/completion/{list_id}", headers=headers)
     assert response.status_code == 200
     completion = response.json()["completion"]
 

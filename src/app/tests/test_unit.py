@@ -1,13 +1,19 @@
 import pytest
 from uuid import uuid4
 from app.application import use_cases
-from app.domain.models import ListaCreate, TareaCreate, task_status, task_progress, task_priority
+from app.domain.models import ListaCreate, TareaCreate, User, task_status, task_progress, task_priority
 from app.domain.exceptions import (
     EstadoInvalidoException,
     ProgresoInvalidoException,
     PrioridadInvalidaException,
     ListaNoEncontradaException,
     TareaNoEncontradaException
+)
+
+current_user = User(
+    username="admin",
+    full_name="Administrador",
+     email="admin@example.com"
 )
 
 def test_create_list():
@@ -68,8 +74,9 @@ def test_get_list_completion_with_tasks():
         status=task_status[1],  # Otro estado válido pero no "Aprobada"
         progress=task_progress[0], priority=task_priority[0]
     )
-    use_cases.create_task(lista.id, tarea_data_1)
-    use_cases.create_task(lista.id, tarea_data_2)
+
+    use_cases.create_task(lista.id, tarea_data_1, current_user)
+    use_cases.create_task(lista.id, tarea_data_2, current_user)
 
     # Debug print
     for tarea in lista.tasks:
@@ -93,23 +100,23 @@ def test_create_task_validations():
         progress=task_progress[0],
         priority=task_priority[0]
     )
-    tarea = use_cases.create_task(lista.id, tarea_data)
+    tarea = use_cases.create_task(lista.id, tarea_data, current_user)
     assert tarea.title == "Test Task"
     assert tarea.status == task_status[0]
 
     with pytest.raises(EstadoInvalidoException):
         tarea_data.status = "Estado inválido"
-        use_cases.create_task(lista.id, tarea_data)
+        use_cases.create_task(lista.id, tarea_data, current_user)
 
     with pytest.raises(ProgresoInvalidoException):
         tarea_data.status = task_status[0]
         tarea_data.progress = "Progreso inválido"
-        use_cases.create_task(lista.id, tarea_data)
+        use_cases.create_task(lista.id, tarea_data, current_user)
 
     with pytest.raises(PrioridadInvalidaException):
         tarea_data.progress = task_progress[0]
         tarea_data.priority = "Prioridad inválida"
-        use_cases.create_task(lista.id, tarea_data)
+        use_cases.create_task(lista.id, tarea_data, current_user)
 
 def test_create_task_list_no_encontrada():
     tarea_data = TareaCreate(
@@ -122,7 +129,7 @@ def test_create_task_list_no_encontrada():
         priority=task_priority[0]
     )
     with pytest.raises(ListaNoEncontradaException):
-        use_cases.create_task(uuid4(), tarea_data)
+        use_cases.create_task(uuid4(), tarea_data, current_user)
 
 def test_get_tasks_success():
     lista = use_cases.create_list(ListaCreate(name="Con tareas"))
@@ -130,7 +137,7 @@ def test_get_tasks_success():
         title="T1", description="Desc", partner="P", rol="R",
         status=task_status[0], progress=task_progress[0], priority=task_priority[0]
     )
-    tarea = use_cases.create_task(lista.id, tarea_data)
+    tarea = use_cases.create_task(lista.id, tarea_data, current_user)
     tareas = use_cases.get_tasks(lista.id)
     assert tarea in tareas
 
@@ -144,7 +151,7 @@ def test_update_task_success():
         title="T1", description="Desc", partner="P", rol="R",
         status=task_status[0], progress=task_progress[0], priority=task_priority[0]
     )
-    tarea = use_cases.create_task(lista.id, tarea_data)
+    tarea = use_cases.create_task(lista.id, tarea_data, current_user)
     tarea_update = TareaCreate(
         title="T1 updated", description="Desc updated", partner="P", rol="R",
         status=task_status[0], progress=task_progress[0], priority=task_priority[0]
@@ -171,7 +178,7 @@ def test_update_task_status_success():
         title="T1", description="Desc", partner="P", rol="R",
         status=task_status[0], progress=task_progress[0], priority=task_priority[0]
     )
-    tarea = use_cases.create_task(lista.id, tarea_data)
+    tarea = use_cases.create_task(lista.id, tarea_data, current_user)
     updated = use_cases.update_task_status(tarea.id, task_status[1])
     assert updated.status == task_status[1]
 
@@ -186,10 +193,20 @@ def test_update_task_status_task_no_encontrada():
 def test_delete_task_success():
     lista = use_cases.create_list(ListaCreate(name="Lista"))
     tarea_data = TareaCreate(
-        title="T1", description="Desc", partner="P", rol="R",
-        status=task_status[0], progress=task_progress[0], priority=task_priority[0]
+        title           = "Test", 
+        description     = "Desc", 
+        partner         = "farid", 
+        rol             = "Role",
+        status          = task_status[0], 
+        progress        = task_progress[0], 
+        priority        = task_priority[0], 
+        assigned_to     = "admin"
     )
-    tarea = use_cases.create_task(lista.id, tarea_data)
+
+    
+
+    tarea = use_cases.create_task(lista.id, tarea_data, current_user)
+
     use_cases.delete_task(tarea.id)
     with pytest.raises(TareaNoEncontradaException):
         use_cases.delete_task(tarea.id)
@@ -208,8 +225,8 @@ def test_filter_tasks():
         title="T2", description="Desc", partner="P", rol="R",
         status=task_status[1], progress=task_progress[0], priority=task_priority[1]
     )
-    use_cases.create_task(lista.id, tarea_data1)
-    use_cases.create_task(lista.id, tarea_data2)
+    use_cases.create_task(lista.id, tarea_data1, current_user)
+    use_cases.create_task(lista.id, tarea_data2, current_user)
 
     filtered_status = use_cases.filter_tasks(lista.id, status=task_status[0])
     assert all(t.status == task_status[0] for t in filtered_status)
