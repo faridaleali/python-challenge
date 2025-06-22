@@ -25,7 +25,7 @@ Este proyecto es una API REST construida con FastAPI para la gestión de listas 
 
 1. Clonar el repositorio:
     ```bash
-    git clone <URL-del-repo>
+    git clone https://github.com/faridaleali/python-challenge.git
     cd proyecto/src
     ```
 
@@ -91,6 +91,31 @@ pytest app/tests/test_unit.py --cov=app --cov-report=term-missing
 pytest app/tests/test_integration.py --cov=app --cov-report=term-missing
 ```
 
+Para correr todos los tests y obtener cobertura:
+
 ```bash
 pytest --cov=app --cov-report=html
 ```
+
+Luego abrir htmlcov/index.html para ver el reporte completo.
+
+---
+
+## Decisiones Técnicas (Resumen)
+
+- FastAPI elegido por su rapidez y facilidad para crear APIs con validación automática.
+- Pydantic para modelos y validación de datos.
+- JWT para autenticación segura y stateless.
+- Uso de Router para separar endpoints públicos (login) y protegidos.
+- Dependencias de seguridad con Depends(JWTBearer()) para proteger rutas.
+- In-memory fake_db para simplicidad en la demo, con posibilidad de migrar a base real.
+- Pruebas divididas en unitarias e integración, con uso de pytest y TestClient.
+- Docker Compose para orquestar contenedor y facilitar despliegue local.
+- .env para manejo seguro de secretos y configuración.
+- Asignación de tareas y simulación de notificaciones como casos de uso extra para sumar puntos.
+
+---
+
+## Contacto
+
+Linkedin: https://www.linkedin.com/in/alealifarid/
