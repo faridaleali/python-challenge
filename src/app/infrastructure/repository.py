@@ -5,7 +5,7 @@ from app.domain.models import Lista, UserInDB
 fake_db: List[Lista] = [
     Lista(
         id = UUID("123e4567-e89b-12d3-a456-426614174000"),
-        name = "Tareas personales",
+        title = "Tareas personales",
         tasks = []
     )
 ]
