@@ -32,7 +32,10 @@ def home():
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if form_data.username == "admin" and form_data.password == "admin":
         token = create_access_token({"sub": form_data.username})
-        return {"access_token": token, "token_type": "bearer"}
+        return {
+                "access_token": token, 
+                "token_type": "bearer"
+            }
     raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
 ##### Listas #####
