@@ -32,8 +32,8 @@ Este proyecto es una API REST construida con FastAPI para la gestión de listas 
 2. Crear y activar entorno virtual:
     ```bash
     python -m venv ../venv
-    source ../venv/Scripts/activate     # Windows
-    source ../venv/bin/activate         # Linux/macOS
+    source ./venv/Scripts/activate     # Windows
+    source ./venv/bin/activate         # Linux/macOS
     ```
 
 3. Instalar dependencias:
@@ -43,13 +43,14 @@ Este proyecto es una API REST construida con FastAPI para la gestión de listas 
 
 4. Crear archivo `.env` en `src/` con las variables necesarias, ejemplo:
     ```
-    SECRET_KEY=tu_clave_secreta_aqui
+    SECRET_KEY=prueba_tecnica_backend
     ALGORITHM=HS256
     ACCESS_TOKEN_EXPIRE_MINUTES=30
     ```
 
 5. Ejecutar servidor:
     ```bash
+    cd src
     uvicorn app.main:app --reload
     ```
 
